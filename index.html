@@ -1,0 +1,527 @@
+```html
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emai - Asisten AI Cerdas</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- MarkedJS for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+        
+        .markdown-body p { margin-bottom: 0.75rem; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body code:not(pre code) { background-color: rgba(99, 102, 241, 0.1); color: #4f46e5; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
+        .dark .markdown-body code:not(pre code) { background-color: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .markdown-body pre { background: #0f172a; border-radius: 0.75rem; padding: 1rem; margin-top: 0.5rem; margin-bottom: 0.75rem; overflow-x: auto; }
+        .markdown-body pre code { background: transparent; padding: 0; font-size: 0.85rem; }
+        .markdown-body blockquote { border-left: 3px solid #6366f1; padding-left: 1rem; margin-bottom: 0.75rem; font-style: italic; opacity: 0.9; }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex overflow-hidden transition-colors duration-200">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-20 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 z-30 fixed md:relative inset-y-0 left-0 -translate-x-full md:translate-x-0 shadow-xl md:shadow-none">
+        <div class="p-4 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-indigo-500/30">E</div>
+                <div>
+                    <span class="font-bold text-lg tracking-wide text-white block leading-none">Emai AI</span>
+                    <span class="text-[10px] text-indigo-400 font-medium tracking-wider uppercase">Advanced Assistant</span>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-3">
+            <button onclick="newChat()" class="w-full flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-4 py-3 rounded-xl font-medium transition-all shadow-md shadow-indigo-500/20 active:scale-98">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Percakapan Baru</span>
+            </button>
+        </div>
+
+        <!-- Saved / Active Chat History List -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar px-3 py-2 space-y-1">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase px-3 py-2 tracking-wider">Sesi Aktif</div>
+            <div id="chat-history-list" class="space-y-1">
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm bg-slate-800/80 text-white font-medium truncate border border-slate-700/50">
+                    <i data-lucide="message-square" class="w-4 h-4 text-indigo-400 shrink-0"></i>
+                    <span id="session-title" class="truncate">Percakapan Baru</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer Sidebar -->
+        <div class="p-4 border-t border-slate-800 flex items-center justify-between bg-slate-950/40">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-semibold text-xs shadow">U</div>
+                <div class="overflow-hidden">
+                    <p class="text-xs font-semibold text-white truncate">Pengguna</p>
+                    <p class="text-[10px] text-emerald-400 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ready
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleDarkMode()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors" title="Ubah Mode Gelap/Terang">
+                <i data-lucide="moon" id="theme-icon" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 relative transition-colors duration-200">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-100 dark:border-slate-800/80 px-4 md:px-6 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white md:hidden p-1">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <div>
+                    <h1 class="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2 text-base">
+                        Emai AI
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 font-medium border border-indigo-200 dark:border-indigo-800">Chat & Image</span>
+                    </h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Mode Toggle Button -->
+                <button id="mode-toggle" onclick="toggleImageMode()" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-xs font-medium flex items-center gap-1.5 transition-all bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <i data-lucide="image" class="w-3.5 h-3.5 text-indigo-500"></i>
+                    <span id="mode-text">Mode: Chat</span>
+                </button>
+                <button onclick="openSettings()" class="p-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 text-xs font-medium" title="Pengaturan API Key">
+                    <i data-lucide="key" class="w-4 h-4 text-indigo-500"></i>
+                    <span class="hidden sm:inline">API Key</span>
+                </button>
+                <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Ready
+                </span>
+            </div>
+        </header>
+
+        <!-- Chat Messages Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-6">
+            <!-- Welcome Message -->
+            <div class="flex items-start gap-3 md:gap-4 max-w-3xl mx-auto">
+                <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 mt-1">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                </div>
+                <div class="space-y-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-xs text-slate-700 dark:text-slate-200 shadow-xs max-w-2xl">
+                    <p class="font-semibold text-slate-900 dark:text-white text-base">Halo! Saya Emai 👋</p>
+                    <p class="text-sm leading-relaxed">
+                        Saya ditenagai oleh kecerdasan buatan cerdas yang bisa **menjawab pertanyaan** sekaligus **membuat gambar/foto** berdasarkan imajinasi Anda!
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        💡 *Tips:* Ketik <code class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded">/gambar &lt;deskripsi&gt;</code> atau klik tombol **Mode** di pojok kanan atas untuk generate foto/gambar.
+                    </p>
+                    <div class="pt-2 flex flex-wrap gap-2">
+                        <button onclick="setPrompt('/gambar Pemandangan gunung cyberpunk dengan lampu neon malam hari')" class="text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:border-indigo-500 transition-colors flex items-center gap-1">
+                            🎨 /gambar Gunung Cyberpunk
+                        </button>
+                        <button onclick="setPrompt('Siapa pembuat anda?')" class="text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:border-indigo-500 transition-colors">
+                            👤 Siapa Pembuat Anda?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-3 md:p-5 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800/80">
+            <form id="chat-form" onsubmit="handleSendMessage(event)" class="max-w-3xl mx-auto relative flex items-center">
+                <textarea 
+                    id="user-input" 
+                    rows="1"
+                    placeholder="Tanyakan sesuatu atau ketik /gambar untuk buat foto..." 
+                    class="w-full pl-4 pr-14 py-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-sm transition-all text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 resize-none max-h-32 shadow-inner"
+                    onkeydown="handleKeyDown(event)"
+                    required
+                ></textarea>
+                <button 
+                    type="submit" 
+                    id="send-button"
+                    class="absolute right-2.5 w-10 h-10 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl flex items-center justify-center transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
+                >
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+            </form>
+            <p class="text-center text-[11px] text-slate-400 dark:text-slate-500 mt-2">
+                Emai AI ditenagai oleh Gemini API & Engine Gambar AI.
+            </p>
+        </div>
+    </main>
+
+    <!-- ... existing settings modal ... -->
+
+    <script>
+        // ... existing options and initializations ...
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true
+        });
+
+        lucide.createIcons();
+
+        const DEFAULT_API_KEY = "";
+        let activeApiKey = localStorage.getItem('emai_api_key') || DEFAULT_API_KEY;
+        let isImageMode = false;
+
+        function toggleImageMode() {
+            isImageMode = !isImageMode;
+            const modeText = document.getElementById('mode-text');
+            const modeBtn = document.getElementById('mode-toggle');
+            const inputField = document.getElementById('user-input');
+
+            if (isImageMode) {
+                modeText.innerText = "Mode: Gambar AI";
+                modeBtn.classList.add('bg-indigo-500', 'text-white', 'border-indigo-600');
+                modeBtn.classList.remove('bg-slate-50', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+                inputField.placeholder = "Deskripsikan foto/gambar yang ingin Anda buat...";
+            } else {
+                modeText.innerText = "Mode: Chat";
+                modeBtn.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-600');
+                modeBtn.classList.add('bg-slate-50', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+                inputField.placeholder = "Tanyakan sesuatu atau ketik /gambar untuk buat foto...";
+            }
+        }
+
+        function getApiUrl() {
+            const key = activeApiKey || "";
+            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
+        }
+
+        function getImageApiUrl() {
+            const key = activeApiKey || "";
+            return `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${key}`;
+        }
+
+        const SYSTEM_INSTRUCTION = `Kamu adalah Emai, asisten kecerdasan buatan yang cerdas, cepat, presisi, dan ramah yang dikembangkan untuk membantu menjawab segala jenis pertanyaan pengguna secara akurat.
+
+ATURAN KHUSUS SANGAT PENTING:
+Jika pengguna menanyakan hal-hal terkait siapa pembuatmu, siapa yang menciptakanmu, siapa penciptamu, atau siapa nama pembuat aplikasi/AI ini (contoh pertanyaan: "siapa pembuat anda", "siapa pembuatmu", "siapa yang buat kamu", "siapa penciptamu", "siapa pembuat Emai", "who created you", "who made you"), kamu WAJIB memberikan jawaban persis berikut tanpa diubah:
+"Pembuat saya adalah seorang lelaki pintar yang bernama mull"
+
+Untuk pertanyaan lainnya, jawablah secara mendalam, terstruktur, cerdas, dan bermanfaat menggunakan bahasa Indonesia yang baik.`;
+
+        let conversationHistory = [];
+
+        // ... existing theme toggle, UI modal controls ...
+        function initTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').setAttribute('data-lucide', 'sun');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+        }
+
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('theme-icon').setAttribute('data-lucide', 'moon');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('theme-icon').setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+        }
+
+        initTheme();
+
+        function openSettings() {
+            document.getElementById('custom-api-key').value = activeApiKey;
+            document.getElementById('settings-modal').classList.remove('hidden');
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const newKey = document.getElementById('custom-api-key').value.trim();
+            activeApiKey = newKey;
+            localStorage.setItem('emai_api_key', newKey);
+            closeSettings();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function setPrompt(text) {
+            const inputField = document.getElementById('user-input');
+            inputField.value = text;
+            inputField.focus();
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function isAskingAboutCreator(text) {
+            const normalized = text.toLowerCase().trim();
+            const keywords = ['pembuat', 'pencipta', 'membuat', 'dibuat', 'bikin', 'dibikin', 'creator', 'who made', 'who created', 'yang buat'];
+            const identityWords = ['kamu', 'anda', 'emai', 'bot', 'ai', 'ini'];
+
+            const hasKeyword = keywords.some(kw => normalized.includes(kw));
+            const hasIdentity = identityWords.some(id => normalized.includes(id));
+
+            return hasKeyword && (hasIdentity || normalized.includes('siapa') || normalized.includes('who'));
+        }
+
+        // Helper to generate image via Gemini Image API or Fallback
+        async function generateAIImage(promptText) {
+            try {
+                // Try Gemini Image API first
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: {
+                        responseModalities: ['TEXT', 'IMAGE']
+                    }
+                };
+
+                const response = await fetch(getImageApiUrl(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                const base64Data = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+
+                if (base64Data) {
+                    return `data:image/png;base64,${base64Data}`;
+                }
+            } catch (err) {
+                console.warn("Gemini Image API fallback triggered:", err);
+            }
+
+            // High Quality Pollinations AI Fallback
+            const encodedPrompt = encodeURIComponent(promptText);
+            const seed = Math.floor(Math.random() * 1000000);
+            return `https://image.pollinations.ai/prompt/${encodedPrompt}?seed=${seed}&width=1024&height=1024&nologo=true`;
+        }
+
+        // Send Message Handler
+        async function handleSendMessage(event) {
+            event.preventDefault();
+            const inputField = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const chatContainer = document.getElementById('chat-container');
+
+            // Detect Image Request Command
+            const isImageCmd = isImageMode || message.toLowerCase().startsWith('/gambar') || message.toLowerCase().startsWith('/image');
+            const cleanImagePrompt = message.replace(/^\/(gambar|image)\s*/i, '').trim();
+
+            // 1. User Bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = "flex items-start gap-3 md:gap-4 max-w-3xl mx-auto justify-end";
+            userBubble.innerHTML = `
+                <div class="space-y-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-3.5 md:p-4 rounded-2xl rounded-tr-xs text-sm shadow-md shadow-indigo-500/10 max-w-xl leading-relaxed">
+                    <p class="whitespace-pre-wrap">${escapeHTML(message)}</p>
+                </div>
+                <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 text-white flex items-center justify-center shrink-0 shadow-md font-semibold text-sm mt-1">U</div>
+            `;
+            chatContainer.appendChild(userBubble);
+
+            inputField.value = '';
+            inputField.disabled = true;
+            sendButton.disabled = true;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // 2. Loading Indicator
+            const loadingId = 'loading-' + Date.now();
+            const loadingBubble = document.createElement('div');
+            loadingBubble.id = loadingId;
+            loadingBubble.className = "flex items-start gap-3 md:gap-4 max-w-3xl mx-auto";
+            loadingBubble.innerHTML = `
+                <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 mt-1">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl rounded-tl-xs text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2 shadow-xs">
+                    <span class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></span>
+                    <span class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 bg-indigo-600 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                    <span class="text-xs text-slate-400 dark:text-slate-500 ml-2">${isImageCmd ? 'Emai sedang melukis gambar...' : 'Emai sedang berpikir...'}</span>
+                </div>
+            `;
+            chatContainer.appendChild(loadingBubble);
+            lucide.createIcons();
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            if (isImageCmd) {
+                // Image Generation
+                const promptToUse = cleanImagePrompt || "Pemandangan keindahan alam futuristik";
+                const imageUrl = await generateAIImage(promptToUse);
+
+                document.getElementById(loadingId)?.remove();
+
+                const aiBubble = document.createElement('div');
+                aiBubble.className = "flex items-start gap-3 md:gap-4 max-w-3xl mx-auto";
+                aiBubble.innerHTML = `
+                    <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 mt-1">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-xs text-slate-700 dark:text-slate-200 text-sm shadow-xs max-w-2xl">
+                        <p class="font-medium text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i> Hasil Gambar AI: "${escapeHTML(promptToUse)}"
+                        </p>
+                        <div class="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md bg-slate-900">
+                            <img src="${imageUrl}" alt="${escapeHTML(promptToUse)}" class="w-full h-auto max-h-[500px] object-contain transition-transform duration-300 group-hover:scale-[1.01]" />
+                            <a href="${imageUrl}" target="_blank" download="emai-generated.png" class="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md flex items-center gap-1.5 transition-all shadow-lg">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh Foto
+                            </a>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(aiBubble);
+            } else if (isAskingAboutCreator(message)) {
+                // Creator Query Rule
+                await new Promise(resolve => setTimeout(resolve, 300));
+                document.getElementById(loadingId)?.remove();
+
+                const aiResponseText = "Pembuat saya adalah seorang lelaki pintar yang bernama mull";
+                conversationHistory.push({ role: "user", parts: [{ text: message }] });
+                conversationHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+
+                const aiBubble = document.createElement('div');
+                aiBubble.className = "flex items-start gap-3 md:gap-4 max-w-3xl mx-auto";
+                aiBubble.innerHTML = `
+                    <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 mt-1">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-xs text-slate-700 dark:text-slate-200 text-sm shadow-xs max-w-2xl leading-relaxed">
+                        <p>${aiResponseText}</p>
+                    </div>
+                `;
+                chatContainer.appendChild(aiBubble);
+            } else {
+                // Text Query via Gemini API
+                let aiResponseText = "";
+                try {
+                    conversationHistory.push({ role: "user", parts: [{ text: message }] });
+
+                    const payload = {
+                        systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+                        contents: conversationHistory
+                    };
+
+                    const response = await fetch(getApiUrl(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                        aiResponseText = data.candidates[0].content.parts[0].text;
+                        conversationHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+                    } else if (data.error) {
+                        aiResponseText = `⚠️ **API Error**: ${data.error.message || 'Gagal memproses permintaan.'}`;
+                    } else {
+                        aiResponseText = "Maaf, Emai tidak menerima balasan yang valid dari server.";
+                    }
+                } catch (error) {
+                    console.error('Fetch Error:', error);
+                    aiResponseText = "Gagal terhubung ke Gemini API.";
+                }
+
+                document.getElementById(loadingId)?.remove();
+
+                const aiBubble = document.createElement('div');
+                aiBubble.className = "flex items-start gap-3 md:gap-4 max-w-3xl mx-auto";
+                aiBubble.innerHTML = `
+                    <div class="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 mt-1">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </div>
+                    <div class="space-y-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-4 md:p-5 rounded-2xl rounded-tl-xs text-slate-700 dark:text-slate-200 text-sm shadow-xs max-w-2xl leading-relaxed markdown-body">
+                        ${marked.parse(aiResponseText)}
+                    </div>
+                `;
+                chatContainer.appendChild(aiBubble);
+            }
+
+            lucide.createIcons();
+            chatContainer.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            inputField.disabled = false;
+            sendButton.disabled = false;
+            inputField.focus();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>
+```
